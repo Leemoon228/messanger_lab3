@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import org.kodein.di.instance
 import retrofit2.HttpException
 import kotlin.time.Duration.Companion.milliseconds
@@ -108,10 +110,14 @@ class ChatAPIVM(application: Application) : AndroidViewModel(application) {
             try {
                 if (token != null) {
                     val response = chatApi.logout(token)
-                    if (!response.isSuccessful) response.errorBody()?.close()
+                    if (!response.isSuccessful) {
+                        response.errorBody()?.close()
+                        throw HttpException(response)
+                    }
                 }
-            } catch (_: Exception) { }
-            finally {
+            } catch (_: Exception) {
+            } catch (_: Exception) {
+            } finally {
                 preferences.edit {
                     remove("username")
                     remove("token")
@@ -209,15 +215,10 @@ class ChatAPIVM(application: Application) : AndroidViewModel(application) {
         if (text.isBlank()) return
         viewModelScope.launch {
             try {
-                val response = chatApi.sendMessage(
+                val message = chatApi.sendMessage(
                     token,
                     NewMessageRequest(username, channel, MessageData(text = TextContent(text)))
                 )
-                if (!response.isSuccessful) {
-                    response.errorBody()?.close()
-                    throw HttpException(response)
-                }
-                val message = response.body() ?: error("Missing server message")
                 if (_state.value.selectedChat == channel) {
                     _state.value = _state.value.copy(messages = _state.value.messages + message)
                 }

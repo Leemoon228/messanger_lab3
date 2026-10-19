@@ -14,7 +14,8 @@ class ChatApi(retrofit: Retrofit) {
             response.errorBody()?.close()
             throw HttpException(response)
         }
-        return response.body()?.use { it.string() } ?: error("Missing auth token")
+        return response.body()?.use { it.string() }?.trim()?.trim('"')
+            ?: error("Missing auth token")
     }
 
     suspend fun channels(): List<String> = service.channels()
@@ -29,8 +30,15 @@ class ChatApi(retrofit: Retrofit) {
     suspend fun inbox(username: String, token: String, limit: Int = 20): List<ChatMessage> =
         service.inbox(username, token, limit)
 
-    suspend fun sendMessage(token: String, message: NewMessageRequest): Response<ChatMessage> =
-        service.sendMessage(token, message)
+    suspend fun sendMessage(token: String, message: NewMessageRequest): ChatMessage {
+        val response = service.sendMessage(token, message)
+        if (!response.isSuccessful) {
+            response.errorBody()?.close()
+            throw HttpException(response)
+        }
+        val id = response.body() ?: error("Missing server message id")
+        return message.asChatMessage(id)
+    }
 
     suspend fun logout(token: String): Response<Unit> = service.logout(token)
 
