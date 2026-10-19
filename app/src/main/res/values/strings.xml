@@ -1,5 +1,16 @@
 <resources>
     <string name="app_name">messanger_lab3</string>
-    <string name="id_d">id %d</string>
-    <string name="user_id_d">user ID %d</string>
+    <string name="login_title">Sign in</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign in</string>
+    <string name="chats">Chats</string>
+    <string name="select_chat">Select a chat</string>
+    <string name="message_hint">Message</string>
+    <string name="send">Send</string>
+    <string name="loading_older_messages">Loading older messages</string>
+    <string name="no_chats">No chats available</string>
+    <string name="token_expired">Token expired</string>
+    <string name="login_failed">Login failed</string>
+    <string name="network_error">Unable to reach chat server</string>
 </resources>
