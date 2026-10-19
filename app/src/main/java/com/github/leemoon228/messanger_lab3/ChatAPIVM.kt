@@ -15,8 +15,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import org.kodein.di.instance
 import retrofit2.HttpException
 import kotlin.time.Duration.Companion.milliseconds
@@ -83,12 +81,7 @@ class ChatAPIVM(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _state.value = _state.value.copy(loading = true)
             try {
-                val response = chatApi.login(LoginRequest(username, password))
-                if (!response.isSuccessful) {
-                    response.errorBody()?.close()
-                    throw HttpException(response)
-                }
-                val token = response.body()?.use { it.string() }?.trim()?.trim('"').orEmpty()
+                val token = chatApi.login(LoginRequest(username, password)).trim().trim('"')
                 if (token.isBlank()) {
                     throw IllegalStateException("Missing auth token")
                 }
@@ -115,8 +108,7 @@ class ChatAPIVM(application: Application) : AndroidViewModel(application) {
             try {
                 if (token != null) {
                     val response = chatApi.logout(token)
-                    if (response.isSuccessful) response.body()?.close()
-                    else response.errorBody()?.close()
+                    if (!response.isSuccessful) response.errorBody()?.close()
                 }
             } catch (_: Exception) { }
             finally {
@@ -225,17 +217,7 @@ class ChatAPIVM(application: Application) : AndroidViewModel(application) {
                     response.errorBody()?.close()
                     throw HttpException(response)
                 }
-                val id = response.body()?.use { it.string() }?.trim()?.trim('"')
-                    ?: throw IllegalStateException("Missing server message id")
-
-                val message = ChatMessage(
-                    id = JsonPrimitive(id),
-                    from = username,
-                    to = channel,
-                    data = buildJsonObject {
-                        put("Text", buildJsonObject { put("text", JsonPrimitive(text)) })
-                    }
-                )
+                val message = response.body() ?: error("Missing server message")
                 if (_state.value.selectedChat == channel) {
                     _state.value = _state.value.copy(messages = _state.value.messages + message)
                 }

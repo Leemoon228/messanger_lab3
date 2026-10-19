@@ -36,10 +36,10 @@ interface ChatApiService {
     suspend fun sendMessage(
         @Header("X-Auth-Token") token: String,
         @Body message: NewMessageRequest
-    ): Response<ResponseBody>
+    ): Response<ChatMessage>
 
     @POST("logout")
-    suspend fun logout(@Header("X-Auth-Token") token: String): Response<ResponseBody>
+    suspend fun logout(@Header("X-Auth-Token") token: String): Response<Unit>
 
     @Streaming
     @GET("{path}")
